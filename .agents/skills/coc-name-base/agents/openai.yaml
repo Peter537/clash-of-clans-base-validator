@@ -1,0 +1,4 @@
+interface:
+  display_name: "Clash name-base design"
+  short_description: "Design complete name bases and verify tile geometry"
+  default_prompt: "Use $coc-name-base to design and validate a complete Clash of Clans name base for my account."

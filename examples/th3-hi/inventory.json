@@ -1,0 +1,69 @@
+{
+  "inventory": {
+    "clan_castle": 1,
+    "gold_storage": 2,
+    "elixir_storage": 2,
+    "gold_mine": 3,
+    "elixir_collector": 3,
+    "army_camp": 2,
+    "laboratory": 1,
+    "barracks": 1,
+    "builders_hut": 2,
+    "wall": 50,
+    "cannon": 2,
+    "archer_tower": 1,
+    "mortar": 1,
+    "bomb": 2
+  },
+  "level_inventory": {
+    "town_hall": {
+      "3": 1
+    },
+    "clan_castle": {
+      "1": 1
+    },
+    "gold_storage": {
+      "6": 2
+    },
+    "elixir_storage": {
+      "6": 2
+    },
+    "gold_mine": {
+      "6": 3
+    },
+    "elixir_collector": {
+      "6": 3
+    },
+    "army_camp": {
+      "3": 2
+    },
+    "laboratory": {
+      "1": 1
+    },
+    "barracks": {
+      "5": 1
+    },
+    "builders_hut": {
+      "1": 2
+    },
+    "wall": {
+      "3": 50
+    },
+    "cannon": {
+      "4": 2
+    },
+    "archer_tower": {
+      "3": 1
+    },
+    "mortar": {
+      "1": 1
+    },
+    "bomb": {
+      "2": 2
+    }
+  },
+  "hero_hall_level": 0,
+  "bob_unlocked": false,
+  "crafted_phase": null,
+  "blocked_areas": []
+}

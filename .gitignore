@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+/reports/
+/layouts/
+/exports/
+/.skill-evaluation/
+/profiles/
+/.test-work/
+/.venv/

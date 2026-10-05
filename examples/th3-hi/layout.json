@@ -1,0 +1,609 @@
+{
+  "schema_version": 1,
+  "name": "Hi",
+  "town_hall": 3,
+  "village": "HV",
+  "ruleset_id": "home-2026-10-04",
+  "ruleset": "../../rulesets/home-2026-10-04.json",
+  "profile": "profile.json",
+  "objects": [
+    {
+      "id": "wall-H-01",
+      "type": "wall",
+      "level": 3,
+      "x": 12,
+      "y": 23,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-02",
+      "type": "wall",
+      "level": 3,
+      "x": 13,
+      "y": 23,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-03",
+      "type": "wall",
+      "level": 3,
+      "x": 13,
+      "y": 24,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-04",
+      "type": "wall",
+      "level": 3,
+      "x": 14,
+      "y": 24,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-05",
+      "type": "wall",
+      "level": 3,
+      "x": 14,
+      "y": 25,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-06",
+      "type": "wall",
+      "level": 3,
+      "x": 15,
+      "y": 25,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-07",
+      "type": "wall",
+      "level": 3,
+      "x": 15,
+      "y": 26,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-08",
+      "type": "wall",
+      "level": 3,
+      "x": 16,
+      "y": 26,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-09",
+      "type": "wall",
+      "level": 3,
+      "x": 16,
+      "y": 27,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-10",
+      "type": "wall",
+      "level": 3,
+      "x": 17,
+      "y": 27,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-11",
+      "type": "wall",
+      "level": 3,
+      "x": 17,
+      "y": 28,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-12",
+      "type": "wall",
+      "level": 3,
+      "x": 18,
+      "y": 28,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-13",
+      "type": "wall",
+      "level": 3,
+      "x": 18,
+      "y": 29,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-14",
+      "type": "wall",
+      "level": 3,
+      "x": 19,
+      "y": 29,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-15",
+      "type": "wall",
+      "level": 3,
+      "x": 16,
+      "y": 19,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-16",
+      "type": "wall",
+      "level": 3,
+      "x": 17,
+      "y": 19,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-17",
+      "type": "wall",
+      "level": 3,
+      "x": 17,
+      "y": 20,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-18",
+      "type": "wall",
+      "level": 3,
+      "x": 18,
+      "y": 20,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-19",
+      "type": "wall",
+      "level": 3,
+      "x": 18,
+      "y": 21,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-20",
+      "type": "wall",
+      "level": 3,
+      "x": 19,
+      "y": 21,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-21",
+      "type": "wall",
+      "level": 3,
+      "x": 19,
+      "y": 22,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-22",
+      "type": "wall",
+      "level": 3,
+      "x": 20,
+      "y": 22,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-23",
+      "type": "wall",
+      "level": 3,
+      "x": 20,
+      "y": 23,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-24",
+      "type": "wall",
+      "level": 3,
+      "x": 21,
+      "y": 23,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-25",
+      "type": "wall",
+      "level": 3,
+      "x": 21,
+      "y": 24,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-26",
+      "type": "wall",
+      "level": 3,
+      "x": 22,
+      "y": 24,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-27",
+      "type": "wall",
+      "level": 3,
+      "x": 22,
+      "y": 25,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-28",
+      "type": "wall",
+      "level": 3,
+      "x": 23,
+      "y": 25,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-29",
+      "type": "wall",
+      "level": 3,
+      "x": 16,
+      "y": 25,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-30",
+      "type": "wall",
+      "level": 3,
+      "x": 17,
+      "y": 25,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-31",
+      "type": "wall",
+      "level": 3,
+      "x": 17,
+      "y": 24,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-32",
+      "type": "wall",
+      "level": 3,
+      "x": 18,
+      "y": 24,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-33",
+      "type": "wall",
+      "level": 3,
+      "x": 18,
+      "y": 23,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-H-34",
+      "type": "wall",
+      "level": 3,
+      "x": 19,
+      "y": 23,
+      "group": "letter-H"
+    },
+    {
+      "id": "wall-i-01",
+      "type": "wall",
+      "level": 3,
+      "x": 20,
+      "y": 15,
+      "group": "letter-i"
+    },
+    {
+      "id": "wall-i-02",
+      "type": "wall",
+      "level": 3,
+      "x": 21,
+      "y": 15,
+      "group": "letter-i"
+    },
+    {
+      "id": "wall-i-03",
+      "type": "wall",
+      "level": 3,
+      "x": 22,
+      "y": 17,
+      "group": "letter-i"
+    },
+    {
+      "id": "wall-i-04",
+      "type": "wall",
+      "level": 3,
+      "x": 23,
+      "y": 17,
+      "group": "letter-i"
+    },
+    {
+      "id": "wall-i-05",
+      "type": "wall",
+      "level": 3,
+      "x": 23,
+      "y": 18,
+      "group": "letter-i"
+    },
+    {
+      "id": "wall-i-06",
+      "type": "wall",
+      "level": 3,
+      "x": 24,
+      "y": 18,
+      "group": "letter-i"
+    },
+    {
+      "id": "wall-i-07",
+      "type": "wall",
+      "level": 3,
+      "x": 24,
+      "y": 19,
+      "group": "letter-i"
+    },
+    {
+      "id": "wall-i-08",
+      "type": "wall",
+      "level": 3,
+      "x": 25,
+      "y": 19,
+      "group": "letter-i"
+    },
+    {
+      "id": "wall-i-09",
+      "type": "wall",
+      "level": 3,
+      "x": 25,
+      "y": 20,
+      "group": "letter-i"
+    },
+    {
+      "id": "wall-i-10",
+      "type": "wall",
+      "level": 3,
+      "x": 26,
+      "y": 20,
+      "group": "letter-i"
+    },
+    {
+      "id": "wall-i-11",
+      "type": "wall",
+      "level": 3,
+      "x": 26,
+      "y": 21,
+      "group": "letter-i"
+    },
+    {
+      "id": "wall-i-12",
+      "type": "wall",
+      "level": 3,
+      "x": 27,
+      "y": 21,
+      "group": "letter-i"
+    },
+    {
+      "id": "wall-i-13",
+      "type": "wall",
+      "level": 3,
+      "x": 25,
+      "y": 22,
+      "group": "letter-i"
+    },
+    {
+      "id": "wall-i-14",
+      "type": "wall",
+      "level": 3,
+      "x": 26,
+      "y": 22,
+      "group": "letter-i"
+    },
+    {
+      "id": "wall-i-15",
+      "type": "wall",
+      "level": 3,
+      "x": 27,
+      "y": 20,
+      "group": "letter-i"
+    },
+    {
+      "id": "wall-i-16",
+      "type": "wall",
+      "level": 3,
+      "x": 28,
+      "y": 20,
+      "group": "letter-i"
+    },
+    {
+      "id": "town_hall-01",
+      "type": "town_hall",
+      "x": 20,
+      "y": 0,
+      "level": 3,
+      "group": "upper-buildings"
+    },
+    {
+      "id": "army_camp-01",
+      "type": "army_camp",
+      "x": 0,
+      "y": 0,
+      "level": 3,
+      "group": "upper-buildings"
+    },
+    {
+      "id": "army_camp-02",
+      "type": "army_camp",
+      "x": 4,
+      "y": 0,
+      "level": 3,
+      "group": "upper-buildings"
+    },
+    {
+      "id": "clan_castle-01",
+      "type": "clan_castle",
+      "x": 8,
+      "y": 0,
+      "level": 1,
+      "group": "upper-buildings"
+    },
+    {
+      "id": "gold_storage-01",
+      "type": "gold_storage",
+      "x": 11,
+      "y": 0,
+      "level": 6,
+      "group": "upper-buildings"
+    },
+    {
+      "id": "gold_storage-02",
+      "type": "gold_storage",
+      "x": 14,
+      "y": 0,
+      "level": 6,
+      "group": "upper-buildings"
+    },
+    {
+      "id": "elixir_storage-01",
+      "type": "elixir_storage",
+      "x": 17,
+      "y": 0,
+      "level": 6,
+      "group": "upper-buildings"
+    },
+    {
+      "id": "elixir_storage-02",
+      "type": "elixir_storage",
+      "x": 24,
+      "y": 0,
+      "level": 6,
+      "group": "upper-buildings"
+    },
+    {
+      "id": "gold_mine-01",
+      "type": "gold_mine",
+      "x": 0,
+      "y": 4,
+      "level": 6,
+      "group": "upper-buildings"
+    },
+    {
+      "id": "gold_mine-02",
+      "type": "gold_mine",
+      "x": 3,
+      "y": 4,
+      "level": 6,
+      "group": "upper-buildings"
+    },
+    {
+      "id": "gold_mine-03",
+      "type": "gold_mine",
+      "x": 6,
+      "y": 4,
+      "level": 6,
+      "group": "upper-buildings"
+    },
+    {
+      "id": "elixir_collector-01",
+      "type": "elixir_collector",
+      "x": 9,
+      "y": 4,
+      "level": 6,
+      "group": "upper-buildings"
+    },
+    {
+      "id": "elixir_collector-02",
+      "type": "elixir_collector",
+      "x": 12,
+      "y": 4,
+      "level": 6,
+      "group": "upper-buildings"
+    },
+    {
+      "id": "elixir_collector-03",
+      "type": "elixir_collector",
+      "x": 15,
+      "y": 4,
+      "level": 6,
+      "group": "upper-buildings"
+    },
+    {
+      "id": "laboratory-01",
+      "type": "laboratory",
+      "x": 18,
+      "y": 4,
+      "level": 1,
+      "group": "upper-buildings"
+    },
+    {
+      "id": "barracks-01",
+      "type": "barracks",
+      "x": 21,
+      "y": 4,
+      "level": 5,
+      "group": "upper-buildings"
+    },
+    {
+      "id": "builders_hut-01",
+      "type": "builders_hut",
+      "x": 27,
+      "y": 0,
+      "level": 1,
+      "group": "upper-buildings"
+    },
+    {
+      "id": "builders_hut-02",
+      "type": "builders_hut",
+      "x": 29,
+      "y": 0,
+      "level": 1,
+      "group": "upper-buildings"
+    },
+    {
+      "id": "cannon-01",
+      "type": "cannon",
+      "x": 14,
+      "y": 35,
+      "level": 4,
+      "group": "lower-defenses"
+    },
+    {
+      "id": "cannon-02",
+      "type": "cannon",
+      "x": 17,
+      "y": 35,
+      "level": 4,
+      "group": "lower-defenses"
+    },
+    {
+      "id": "archer_tower-01",
+      "type": "archer_tower",
+      "x": 20,
+      "y": 35,
+      "level": 3,
+      "group": "lower-defenses"
+    },
+    {
+      "id": "mortar-01",
+      "type": "mortar",
+      "x": 23,
+      "y": 35,
+      "level": 1,
+      "group": "lower-defenses"
+    },
+    {
+      "id": "bomb-01",
+      "type": "bomb",
+      "x": 13,
+      "y": 35,
+      "level": 2,
+      "group": "lower-defenses"
+    },
+    {
+      "id": "bomb-02",
+      "type": "bomb",
+      "x": 26,
+      "y": 35,
+      "level": 2,
+      "group": "lower-defenses"
+    }
+  ],
+  "visual_review": {
+    "status": "reviewed",
+    "reviewed_on": "2026-10-04",
+    "method": "LLM browser inspection of overhead and whole-village isometric schematics",
+    "conclusion": "The capital H and dotted lowercase i read as Hi at whole-village scale. The strokes and dot remain separate, with clear grass between lettering and surrounding buildings. Overhead origins match the intended diagonal tile strokes. Game sprites and editor acceptance remain unconfirmed."
+  }
+}
