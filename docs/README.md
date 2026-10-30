@@ -10,6 +10,7 @@ Use this reference to record your account inventory, design layouts with explici
 - [Inventory rules](rules.md): mergers, prerequisites, optional objects and seasonal state.
 - [Generated catalogue](catalogue.md): footprints, availability, counts and maximum levels.
 - [Sources and conflicts](sources.md): provenance and remaining limits.
+- [Game-fact review](rules-verification.md): full October 30 coverage, corrections and live-version limits.
 - [Updating rules](updating-rules.md): immutable snapshots and reviewed migrations.
 - [Verification](verification.md): checks and publication boundaries.
 

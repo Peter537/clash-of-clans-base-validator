@@ -56,6 +56,9 @@ def profile_diagnostics(profile, rules):
             issue("BOB", "B.O.B.'s Hut requires a confirmed Builder Base unlock")
     if inventory.get("town_hall") != 1:
         issue("TOWN_HALL", "Exactly one Town Hall is required in the account profile")
+    for kind, minimum in rules["town_halls"][str(th)].get("minimum_mergers", {}).items():
+        if inventory.get(kind, 0) < minimum:
+            issue("MERGER_MIN", f"TH{th} requires at least {minimum} {kind} from earlier Town Hall progression")
     for kind, spec in specs.items():
         count = inventory.get(kind, 0)
         if integer(count) and 0 <= count < spec.get("min_count", 0):
@@ -193,6 +196,11 @@ def create_profile(rules, th, *, account=None, counts=None, level_counts=None, p
         if kind not in explicit_counts and isinstance(distribution, dict) and all(integer(v) for v in distribution.values()):
             profile["inventory"][kind] = sum(distribution.values())
     if preset == "max":
+        remaining = available_limits(rules, profile)
+        ingredients = {kind for recipe in rules["mergers"].values() for kind in recipe["consumes"]}
+        for kind in sorted(ingredients - explicit_counts - distributions.keys()):
+            if remaining.get(kind, 0) or kind in profile["inventory"]:
+                profile["inventory"][kind] = remaining.get(kind, 0)
         profile["notes"] = ["Max template baseline with declared overrides: remaining inventory and ordinary levels are assumed maximum. Builder's Hut count is recorded in inventory; B.O.B. unlock is supplied explicitly."]
         profile["level_inventory"] = {k: {str(profile["hero_hall_level"] if k == "hero_hall" else rules["objects"][k]["max_levels"][str(th)]): n}
                                       for k, n in profile["inventory"].items() if k in rules["objects"] and n}

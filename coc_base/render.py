@@ -24,6 +24,12 @@ def polygon(x, y, w, h, iso):
                      project(x+w, y+h, iso), project(x, y+h, iso)])
 
 
+def render_paths(output):
+    output = Path(output)
+    return (output, output.with_suffix(".validation.json"),
+            output.with_suffix(".isometric.svg"), output.with_suffix(".overhead.svg"))
+
+
 def svg(layout, rules, profile, result, iso=False):
     invalid = {oid for d in result["diagnostics"] for oid in d["objects"]}
     content = []
@@ -71,7 +77,7 @@ def svg(layout, rules, profile, result, iso=False):
             px, py = project(x+ow/2, y+oh/2, iso)
             label = spec["label"]
             suffix = oid.rsplit("-",1)[-1]
-            text = f"{label}{int(suffix)}" if suffix.isdigit() else label
+            text = label + (suffix.lstrip("0") or "0") if suffix.isascii() and suffix.isdecimal() else label
             size = (6 if iso else 8) if spec["category"] == "trap" else (8 if iso else 10)
             content.append(f'<text x="{px}" y="{py+3}" class="object-label" font-size="{size}">{escape(text)}</text>')
         content.append('</g>')
@@ -84,7 +90,7 @@ def svg(layout, rules, profile, result, iso=False):
 
 
 def render(layout, rules, profile, output, *, context=None):
-    output = Path(output)
+    output, validation_path, isometric_path, overhead_path = render_paths(output)
     result = validate(layout, rules, profile)
     result.update(context or {})
     iso, overhead = svg(layout, rules, profile, result, True), svg(layout, rules, profile, result)
@@ -109,7 +115,7 @@ def render(layout, rules, profile, output, *, context=None):
 <div class="panel"><h2>Complete inventory</h2><table><tr><th>Object</th><th>Placed</th><th>Required</th></tr>{rows}</table></div></section><p class="caption">This project is unofficial and is not endorsed by Supercell. See <a href="https://supercell.com/en/fan-content-policy/">Supercell’s Fan Content Policy</a>.</p></main></html>'''
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(html, encoding="utf-8")
-    write_json(output.with_suffix(".validation.json"), result)
-    output.with_suffix(".isometric.svg").write_text(iso, encoding="utf-8")
-    output.with_suffix(".overhead.svg").write_text(overhead, encoding="utf-8")
+    write_json(validation_path, result)
+    isometric_path.write_text(iso, encoding="utf-8")
+    overhead_path.write_text(overhead, encoding="utf-8")
     return result

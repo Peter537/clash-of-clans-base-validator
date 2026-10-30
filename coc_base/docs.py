@@ -22,6 +22,13 @@ def generated_docs(rules):
     header += ["## Merger recipes", "", "| Result | Consumed objects | Minimum consumed level | Gear-up required |", "| --- | --- | --- | --- |"]
     for kind,recipe in rules["mergers"].items():
         header.append(f"| {kind} | {', '.join(f'{v} {k}' for k,v in recipe['consumes'].items())} | {recipe['ingredient_level']} | {recipe.get('geared', False)} |")
+    minimums = [(th, kind, count) for th in town_halls
+                for kind, count in rules["town_halls"][str(th)].get("minimum_mergers", {}).items()]
+    if minimums:
+        header += ["", "## Minimum completed mergers", "",
+                   "These mergers were required to reach the current Town Hall, even for partial accounts. Missing types are not filled in automatically. New mergers available at the current Town Hall may remain unfinished.", "",
+                   "| Current TH | Type | Minimum count |", "| --- | --- | --- |"]
+        header += [f"| {th} | {kind} | {count} |" for th, kind, count in minimums]
     header += ["", "## Account and setting prerequisites", "",
                "Purchased huts and B.O.B. depend on the actual account. Developed profiles include every non-optional inventory slot; they do not require every optional purchase or external unlock.", ""]
     for kind,spec in sorted(rules["objects"].items()):

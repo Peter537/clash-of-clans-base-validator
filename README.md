@@ -7,13 +7,15 @@ Validate LLM-authored Clash of Clans Home Village layouts, inspect tile footprin
 Run from the repository root with Python 3.14. No package installation, API key or game login is required. The public [TH3 Hi example](examples/th3-hi/README.md) has a synthetic account, 50 walls and explicit placements.
 
 ```powershell
-py -3.14 -m coc_base validate examples/th3-hi/layout.json --json reports/hi.validation.json
-py -3.14 -m coc_base render examples/th3-hi/layout.json --output reports/hi.html
-py -3.14 -m coc_base export examples/th3-hi/layout.json --output exports/hi
+py -3.14 -m coc_base validate examples/th3-hi/layout.json --historical --json reports/hi.validation.json
+py -3.14 -m coc_base render examples/th3-hi/layout.json --historical --output reports/hi.html
+py -3.14 -m coc_base export examples/th3-hi/layout.json --historical --output exports/hi
 py -3.14 -m coc_base render exports/hi/layout.json --historical --output exports/hi/preview.html
 ```
 
 Open `reports/hi.html` in a browser for overhead and isometric views. `exports/hi/` contains frozen inputs, coordinates and a construction guide. These output directories are ignored by Git.
+
+The example retains its original frozen rules and profile references. `--historical` reproduces that model pass. Omit the flag to compare with current bundled rules; the old snapshot IDs remain unresolved until you explicitly review and version the inputs.
 
 ## Use your account
 

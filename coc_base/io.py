@@ -5,6 +5,9 @@ import json
 from pathlib import Path
 
 
+CURRENT_SELECTOR = Path(__file__).resolve().parents[1] / "rulesets/current.json"
+
+
 def read_json(path):
     def pairs(items):
         result = {}
@@ -22,13 +25,28 @@ def write_json(path, value):
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def check_output_paths(outputs, inputs):
+    """Reject source aliases and colliding artifacts before any output is written."""
+    protected = [Path(path).resolve() for path in inputs]
+    destinations = []
+    for path in outputs:
+        destination = Path(path).resolve()
+        for other in [*protected, *destinations]:
+            if destination == other or (destination.exists() and other.exists()
+                                         and destination.samefile(other)):
+                raise ValueError(f"Output {path} would overwrite an input or another output: {other}")
+        if destination.is_dir():
+            raise ValueError(f"Output file is an existing directory: {path}")
+        destinations.append(destination)
+
+
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"),
                                      ensure_ascii=False).encode()).hexdigest()
 
 
 def current_rules_path():
-    selector_path = Path(__file__).resolve().parents[1] / "rulesets/current.json"
+    selector_path = CURRENT_SELECTOR
     selector = read_json(selector_path)
     if (not isinstance(selector, dict) or not integer(selector.get("schema_version"))
             or selector["schema_version"] != 1 or not isinstance(selector.get("ruleset"), str)):
@@ -174,6 +192,11 @@ def check_rules_structure(rules):
         ingredients = _mapping(recipe.get("consumes"), f"Ruleset.mergers.{kind}.consumes")
         if any(not integer(count) for count in ingredients.values()):
             raise ValueError(f"Ruleset.mergers.{kind}.consumes must contain integers")
+    for th, hall in halls.items():
+        minimums = _mapping(hall.get("minimum_mergers", {}), f"Ruleset.town_halls.{th}.minimum_mergers")
+        for kind, count in minimums.items():
+            if kind not in mergers or not integer(count) or not 0 <= count <= hall["limits"].get(kind, 0):
+                raise ValueError(f"Ruleset.town_halls.{th}.minimum_mergers requires merger counts within limits")
     slots = rules.get("banner_slots")
     if (not isinstance(slots, list) or any(not isinstance(pair, list) or len(pair) != 2
                                          or any(not integer(n) for n in pair) for pair in slots)):
@@ -242,6 +265,12 @@ def selection_context(path, rules, *, historical=False, explicit=False):
     count_changes = {k: {"before": before.get(k, 0), "after": after.get(k, 0)}
                      for k in sorted(before.keys() | after.keys()) if before.get(k, 0) != after.get(k, 0)}
     changed = set(changed_types(old, rules)) | count_changes.keys()
+    old_minimums = old.get("town_halls", {}).get(th, {}).get("minimum_mergers", {})
+    new_minimums = rules.get("town_halls", {}).get(th, {}).get("minimum_mergers", {})
+    minimum_changes = {k: {"before": old_minimums.get(k, 0), "after": new_minimums.get(k, 0)}
+                       for k in sorted(old_minimums.keys() | new_minimums.keys())
+                       if old_minimums.get(k, 0) != new_minimums.get(k, 0)}
+    changed |= minimum_changes.keys()
     for target in old.get("mergers", {}).keys() | rules.get("mergers", {}).keys():
         a, b = old.get("mergers", {}).get(target, {}), rules.get("mergers", {}).get(target, {})
         if a != b:
@@ -255,6 +284,7 @@ def selection_context(path, rules, *, historical=False, explicit=False):
     context["migration"] = {
         "comparison_available": True, "from_ruleset_id": old.get("id"), "to_ruleset_id": rules.get("id"),
         "changed_types": sorted(changed), "count_changes": count_changes,
+        "minimum_merger_changes": minimum_changes,
         "affected_objects": [o["id"] for o in layout.get("objects", []) if isinstance(o, dict)
                              and isinstance(o.get("id"), str) and (board_changed or o.get("type") in changed)],
         "board_changed": board_changed, "phase_changed": phase_changed,

@@ -9,9 +9,11 @@ On 2026-10-04, the designer inspected both browser schematics and judged the who
 From the repository root:
 
 ```powershell
-py -3.14 -m coc_base validate examples/th3-hi/layout.json --json reports/hi.validation.json
-py -3.14 -m coc_base render examples/th3-hi/layout.json --output reports/hi.html
-py -3.14 -m coc_base export examples/th3-hi/layout.json --output exports/hi
+py -3.14 -m coc_base validate examples/th3-hi/layout.json --historical --json reports/hi.validation.json
+py -3.14 -m coc_base render examples/th3-hi/layout.json --historical --output reports/hi.html
+py -3.14 -m coc_base export examples/th3-hi/layout.json --historical --output exports/hi
 ```
 
 Open `reports/hi.html` to inspect both views. Use `exports/hi/construction.md` and the exported CSV for manual construction. Outputs are ignored by Git; the example's input files remain public.
+
+These inputs retain their `home-2026-10-04` snapshot references. The commands reproduce that historical model pass. To compare with newer bundled rules, omit `--historical`; the CLI reports the snapshot ID mismatch without rewriting these inputs.

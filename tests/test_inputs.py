@@ -29,7 +29,7 @@ class HTMLNodes(HTMLParser):
 
 class InputTests(unittest.TestCase):
     def setUp(self):
-        self.layout, self.rules, self.profile = load_bundle(ROOT / "examples/th3-hi/layout.json")
+        self.layout, self.rules, self.profile = load_bundle(ROOT / "examples/th3-hi/layout.json", historical=True)
 
     def malformed_inputs(self):
         yield "objects array", "layout", {"objects": None}
@@ -63,6 +63,11 @@ class InputTests(unittest.TestCase):
         specs = deepcopy(self.rules["objects"])
         specs["wall"]["settings"] = None
         yield "settings rules", "rules", {"objects": specs}
+        for minimums in (None, {"ricochet_cannon": True}, {"ricochet_cannon": -1},
+                         {"ricochet_cannon": 4}, {"wall": 1}):
+            halls = deepcopy(self.rules["town_halls"])
+            halls["17"]["minimum_mergers"] = minimums
+            yield f"minimum mergers {minimums!r}", "rules", {"town_halls": halls}
 
     def test_malformed_inputs_rejected_before_direct_output(self):
         with temporary_directory() as directory:
@@ -151,6 +156,21 @@ class InputTests(unittest.TestCase):
             for view in ("isometric", "overhead"):
                 tree = ET.fromstring(output.with_suffix(f".{view}.svg").read_text(encoding="utf-8"))
                 self.assertTrue(any(node.attrib.get("data-id") == marker for node in tree.iter()))
+
+    def test_arbitrary_digit_suffixes_render_without_integer_conversion(self):
+        hall = next(o for o in self.layout["objects"] if o["type"] == "town_hall")
+        for suffix in ("\u00b2", "\u0662", "9" * 4500, "0001", "000"):
+            with self.subTest(suffix=suffix[:20]), temporary_directory() as directory:
+                hall["id"] = "hall-" + suffix
+                output = directory / "review.html"
+                result = render(self.layout, self.rules, self.profile, output)
+                self.assertEqual(result["status"], "PASS", result["diagnostics"])
+                expected = "TH1" if suffix == "0001" else "TH0" if suffix == "000" else None
+                for view in ("isometric", "overhead"):
+                    tree = ET.parse(output.with_suffix(f".{view}.svg"))
+                    node = next(n for n in tree.iter() if n.attrib.get("data-id") == hall["id"])
+                    if expected:
+                        self.assertIn(expected, [n.text for n in node.iter()])
 
     def test_unusable_wall_coordinates_remain_in_json_and_csv(self):
         for value in (None, True, "bad", [1], {"bad": 1}):

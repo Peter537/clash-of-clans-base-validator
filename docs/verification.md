@@ -14,7 +14,11 @@ The suite checks supported Town Halls, wall shortages, partial inventories, opti
 
 Regression tests check that malformed input is rejected before output is written, existing files are preserved, HTML/SVG text is escaped, integer types are exact, and reservation permissions are enforced. They also check exports of placements with unusable coordinates. Historical and explicit checks also run with missing or malformed current selectors; default checks must still reject them.
 
+Output regressions cover source aliases, render sidecars, selected/frozen rules and selector preservation, profile/docs inputs, and safe report regeneration. Hardlink checks run when supported by the filesystem and permissions. Merger regressions distinguish valid partial TH16/TH17 development from missing inherited mergers, preserve historical snapshots, and check max-template ingredient recalculation against explicit counts and distributions. Unicode and long numeric IDs must render without integer-conversion failures.
+
 `tools/check_docs.py` checks public local links and anchors, generated-catalogue consistency, skill structure, public content for stale private references, and standard-library runtime imports. It excludes ignored personal and disposable folders. Source review dates and hashes belong to the selected snapshot.
+
+Fact corrections have regressions for the Hero Hall 2/3 banner boundary, TH8 banner count, four Firespitter directions, eight Air Sweeper directions, both Multi-Gear Tower modes and the preserved settings under the October 4 historical snapshot. See the [fact-review evidence and limits](rules-verification.md); passing local tests cannot establish live asset currency or in-game acceptance.
 
 ## Publication boundary
 

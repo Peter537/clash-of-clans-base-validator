@@ -34,7 +34,9 @@ Isometric projection uses `(x−y, (x+y)/2)` with a fixed display scale. It adds
 | --- | --- |
 | x_bow | `mode`: `ground` or `ground_air` |
 | inferno_tower | `mode`: `single` or `multi` |
-| air_sweeper, firespitter | `direction`: integer 0–7; project convention starts at +x and rotates in 45° steps |
+| air_sweeper | `direction`: integer 0–7; project convention starts at +x and rotates in 45° steps |
+| firespitter | `direction`: 0, 2, 4 or 6 in the same project index; rotation steps are 90° |
+| multi_gear_tower | `mode`: `long_range` or `fast_attack` |
 | spell_tower | `spell`: `rage`, `poison`, `invisibility`, `earthquake`; minimum ordinary levels 1,2,3,4 respectively |
 | skeleton_trap | `mode`: `ground` or `air` |
 | hero_banner | `hero`: `king`, `queen`, `minion_prince`, `warden`, `champion`, `dragon_duke`, `unassigned` |
@@ -46,7 +48,7 @@ Cannon, Archer Tower and Mortar optionally accept boolean `geared`. Each type ha
 
 Required fields: `schema_version`, `id`, `ruleset_id`, `town_hall`, `inventory`, `hero_hall_level`. Use `fully_developed: true` only when every non-optional slot is developed after the stated mergers. Purchased Builder’s Huts and B.O.B. still use the actual account counts. `bob_unlocked` confirms the external Builder Base prerequisite. `crafted_phase` identifies the account’s reviewed phase. `blocked_areas` contains obstacle rectangles.
 
-Use [profile create](accounts.md) to save your account facts as a complete profile. Omitted object types count as zero. Every declared inventory count is exact: missing and excess placements both fail. `fully_developed: false` permits unbuilt slots while retaining count limits, mergers, the mandatory Town Hall and availability checks. Use `--preset max` explicitly to assume maximum inventory and levels.
+Use [profile create](accounts.md) to save your account facts as a complete profile. Omitted object types count as zero. Every declared inventory count is exact: missing and excess placements both fail. `fully_developed: false` permits unbuilt slots while retaining count limits, mergers, the mandatory Town Hall and availability checks. Rules may specify per-Town-Hall `minimum_mergers`; these apply to partial accounts too. See [mandatory earlier mergers](rules.md#mandatory-earlier-mergers). Use `--preset max` explicitly to assume maximum inventory and levels.
 
 Optional `level_inventory` records how many objects of each type are at each ordinary level, for example `{"wall":{"11":100,"12":140}}`. Counts must sum to that type's inventory. Placed levels must match each supplied distribution exactly. For types without a distribution, level checks cover only the Town Hall's level limits and relevant prerequisites; reports identify that coverage limit. The optional field is compatible with existing schema-1 profiles.
 

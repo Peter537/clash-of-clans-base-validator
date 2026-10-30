@@ -79,7 +79,7 @@ class ProjectTests(unittest.TestCase):
         for th in (3, 4, 18):
             with self.subTest(th=th):
                 if th == 3:
-                    l,r,p=load_bundle(ROOT/"examples/th3-hi/layout.json")
+                    l,r,p=load_bundle(ROOT/"examples/th3-hi/layout.json",historical=True)
                 else:
                     l,p=inventory_fixture(th);r=RULES
                 result=validate(l,r,p)
@@ -229,16 +229,16 @@ class ProjectTests(unittest.TestCase):
 
     def test_cli_all_interfaces(self):
         with temporary_directory() as d:
-            commands=[["validate","examples/th3-hi/layout.json","--json",str(Path(d)/"v.json")],
-                      ["render","examples/th3-hi/layout.json","--output",str(Path(d)/"p.html")],
-                      ["export","examples/th3-hi/layout.json","--output",str(Path(d)/"bundle")],
+            commands=[["validate","examples/th3-hi/layout.json","--historical","--json",str(Path(d)/"v.json")],
+                      ["render","examples/th3-hi/layout.json","--historical","--output",str(Path(d)/"p.html")],
+                      ["export","examples/th3-hi/layout.json","--historical","--output",str(Path(d)/"bundle")],
                       ["profile","create","--town-hall","3","--inventory","examples/th3-hi/inventory.json","--output",str(Path(d)/"account.json")],
                       ["docs","--output",str(Path(d)/"docs")]]
             for args in commands:
                 result=subprocess.run([sys.executable,"-m","coc_base",*args],cwd=ROOT,capture_output=True,text=True)
                 self.assertEqual(result.returncode,0,result.stdout+result.stderr)
             self.assertEqual((Path(d)/"docs/catalogue.md").read_text(encoding="utf-8"),generated_docs(RULES))
-            newer=copy.deepcopy(RULES);newer["id"]="reviewed-future-fixture"
+            newer=read_json(ROOT/"rulesets/home-2026-10-04.json");newer["id"]="reviewed-future-fixture"
             newer["objects"]["wall"]["max_levels"]["3"]=4
             rules_path=Path(d)/"newer.json";rules_path.write_text(json.dumps(newer),encoding="utf-8")
             report_path=Path(d)/"migration.json"

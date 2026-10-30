@@ -12,7 +12,7 @@ py -3.14 -m coc_base profile create --town-hall 12 --inventory account.json --ou
 {
   "inventory": {"builders_hut": 3, "wall": 240, "hero_hall": 1, "hero_banner": 2},
   "level_inventory": {"wall": {"11": 100, "12": 140}},
-  "hero_hall_level": 2,
+  "hero_hall_level": 3,
   "bob_unlocked": false,
   "crafted_phase": null,
   "blocked_areas": [{"x": 8, "y": 9, "width": 2, "height": 2, "label": "saved tree"}]
@@ -24,6 +24,8 @@ Supported fields are `inventory`, optional `level_inventory`, `hero_hall_level`,
 ## Counts and levels
 
 Declare the actual Builder's Hut count. The reviewed starting-home model requires at least one hut; buying additional slots is optional. Hero Hall count and level must agree. Banner counts and assigned heroes depend on that level. A Crafting Station needs the matching seasonal `crafted_phase` identifier. B.O.B. requires you to confirm its Builder Base unlock and use a supported Town Hall.
+
+TH17 accounts must declare at least two Ricochet Cannons and two Multi-Archer Towers. TH18 accounts must declare three of each and one Multi-Gear Tower. These inherited minimums also apply to partial accounts; missing mergers are rejected rather than supplied automatically. TH16 may have unfinished mergers, and TH17 may still lack its third pair and Multi-Gear Tower. These checks describe the current account; they do not establish readiness to upgrade to the next Town Hall. See [inventory rules](rules.md#mandatory-earlier-mergers).
 
 ```powershell
 py -3.14 -m coc_base profile create --town-hall 12 --count builders_hut=3 --count wall=240 --level-count wall:11=100 --level-count wall:12=140 --output profiles/mixed.json
@@ -49,5 +51,7 @@ py -3.14 -m coc_base profile create --town-hall 18 --preset max --count builders
 `--preset max` calculates inventory from the selected catalogue after applying the maximum number of completed mergers. It assumes maximum ordinary levels, the maximum Hero Hall level and five purchased Builder's Huts. B.O.B. remains absent unless its external unlock is explicitly confirmed. The selected Crafted phase is also an assumption. Check these assumptions against your account before construction.
 
 Use count and level overrides to describe an account that is not fully developed. The saved profile then permits unbuilt slots while retaining availability, count caps, minimum counts, Hero Hall and merger checks. The template cannot prove historical upgrades or completed merges.
+
+After merger overrides, the template recalculates ingredient counts that you have not explicitly declared. For example, a TH16 max template with `--count ricochet_cannon=1` includes five ordinary Cannons. Explicit ingredient counts or level distributions still take precedence; they are never increased to fill the remaining maximum. Overrides below inherited merger minimums are rejected.
 
 Profiles normally use the [bundled rules](cli.md#rules-selection). `profile create --ruleset PATH` uses an explicit snapshot. Invalid or unresolved input is rejected before writing the output.

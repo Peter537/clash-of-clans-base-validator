@@ -5,19 +5,23 @@ Run the CLI from the repository root with Python 3.14. It uses only Python's sta
 ```powershell
 py -3.14 -m coc_base --help
 py -3.14 -m coc_base profile create --town-hall 3 --inventory examples/th3-hi/inventory.json --output profiles/account.json
-py -3.14 -m coc_base validate examples/th3-hi/layout.json --json reports/hi.validation.json
-py -3.14 -m coc_base render examples/th3-hi/layout.json --output reports/hi.html
-py -3.14 -m coc_base export examples/th3-hi/layout.json --output exports/hi
+py -3.14 -m coc_base validate examples/th3-hi/layout.json --historical --json reports/hi.validation.json
+py -3.14 -m coc_base render examples/th3-hi/layout.json --historical --output reports/hi.html
+py -3.14 -m coc_base export examples/th3-hi/layout.json --historical --output exports/hi
 py -3.14 -m coc_base docs
 ```
 
 `profile create` declares an account from JSON and flags. See [account inputs](accounts.md). Without `--preset max`, it includes only declared inventory and an automatically supplied Town Hall.
+
+The example commands use `--historical` because the saved example keeps its original snapshot references. Omit that flag to compare it with current rules and review the resulting ID mismatch; commands do not rewrite saved references.
 
 `validate` prints diagnostics and optionally writes JSON. Checks include exact inventory, walls, footprints, overlaps, boundaries, obstacles, reservations, IDs, availability, levels, supplied distributions, settings, banners and mergers. Unknown rules are reported separately from known errors.
 
 `render` writes HTML, `.isometric.svg`, `.overhead.svg` and `.validation.json` files. Known invalid placements have red outlines. Out-of-bounds objects remain visible. Objects without usable coordinates cannot be drawn; their diagnostics are still included. Both views share identical coordinates and model footprints. Rendering never repairs placements.
 
 `export` writes `layout.json`, frozen `ruleset.json`, `profile.json`, `validation.json`, `coordinates.csv` and `construction.md`. Well-formed layouts with invalid or unresolved placements can be exported for review with their status. The construction guide's wall rows omit objects without usable integer coordinates and explain the omissions. The supplied values remain in JSON and CSV. You can move the bundle files together; the CLI still runs from a project checkout.
+
+Before writing, commands reject output paths that alias their input files, selected or frozen rules, or the current selector. Render sidecars and every export filename are checked too, including aliases through existing hardlinks or symlinks. A collision returns exit code 3 without changing outputs. Use a separate export directory; exporting into the source bundle directory is rejected. Existing report files may still be regenerated when they are not inputs.
 
 If the input structure is malformed, the command returns exit code 3 before creating or overwriting output files. Examples include `objects: null`, non-object entries, null groups or visual reviews, non-integer inventory counts, and an `allow_types` value that is not an array of strings. Placement errors such as overlaps, out-of-bounds footprints and unusable coordinates still produce model diagnostics and outputs for review.
 
@@ -42,7 +46,7 @@ Choose one rules mode for validation, rendering or export:
 
 Historical and explicit selections work even when current rules cannot be loaded. In that case reports set `current_ruleset_id` to `null` and include `current_ruleset_notice`. The notice is informational and does not change the selected model's result. Default mode still requires usable current rules and returns input-error code 3 when they are unavailable.
 
-If current or explicit rules differ from frozen rules, migration diagnostics identify changed types, count limits, affected IDs, board changes and seasonal changes. ID mismatches remain unresolved until the designer reviews updated profile/layout references. A missing frozen file prevents comparison, but current rules can still check geometry. Updating the selector never edits saved inputs.
+If current or explicit rules differ from frozen rules, migration diagnostics identify changed types, count limits, inherited merger minimums (`minimum_merger_changes`), affected IDs, board changes and seasonal changes. ID mismatches remain unresolved until the designer reviews updated profile/layout references. A missing frozen file prevents comparison, but current rules can still check geometry. Updating the selector never edits saved inputs.
 
 Replace `PATH/TO/reviewed-snapshot.json` with a real snapshot for an explicit comparison:
 

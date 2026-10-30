@@ -5,11 +5,11 @@ import json
 from pathlib import Path
 import sys
 
-from .io import check_rules_structure, current_rules_path, load_bundle, read_json, selection_context, write_json
+from .io import CURRENT_SELECTOR, check_output_paths, check_rules_structure, current_rules_path, load_bundle, read_json, selection_context, write_json
 from .profiles import count_assignments, create_profile
 from .validate import validate
-from .render import render
-from .export import export
+from .render import render, render_paths
+from .export import export, export_paths
 from .docs import write_docs
 
 
@@ -46,18 +46,22 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         if args.command == "docs":
-            rules = read_json(args.ruleset or current_rules_path())
+            rules_path = args.ruleset or current_rules_path()
+            rules = read_json(rules_path)
             check_rules_structure(rules)
+            check_output_paths([args.output / "catalogue.md"], [rules_path, CURRENT_SELECTOR])
             write_docs(rules, args.output)
             print(f"Catalogue written to {args.output / 'catalogue.md'}")
             return 0
         if args.command == "profile":
-            rules = read_json(args.ruleset or current_rules_path())
+            rules_path = args.ruleset or current_rules_path()
+            rules = read_json(rules_path)
             profile = create_profile(
                 rules, args.town_hall, account=read_json(args.inventory) if args.inventory else None,
                 counts=count_assignments(args.count), level_counts=count_assignments(args.level_count, levels=True),
                 preset=args.preset, profile_id=args.id or args.output.stem,
                 hero_hall_level=args.hero_hall_level, bob_unlocked=args.bob_unlocked, crafted_phase=args.crafted_phase)
+            check_output_paths([args.output], [rules_path, CURRENT_SELECTOR, *([args.inventory] if args.inventory else [])])
             write_json(args.output, profile)
             print(f"Profile written to {args.output}; rules {rules['id']} reviewed {rules['verified_on']}")
             print("Explicit max assumptions applied." if args.preset else "Only declared inventory included; Town Hall supplied automatically.")
@@ -65,6 +69,16 @@ def main(argv=None):
             return 0
         layout,rules,profile = load_bundle(args.layout, args.ruleset, historical=args.historical)
         context = selection_context(args.layout, rules, historical=args.historical, explicit=bool(args.ruleset))
+        layout_path = args.layout.resolve()
+        inputs = [layout_path, layout_path.parent / layout["profile"],
+                  layout_path.parent / layout["ruleset"], CURRENT_SELECTOR]
+        if args.ruleset:
+            inputs.append(args.ruleset)
+        if context["current_ruleset_id"] is not None:
+            inputs.append(current_rules_path())
+        outputs = ([args.json] if args.json else []) if args.command == "validate" else (
+            render_paths(args.output) if args.command == "render" else export_paths(args.output))
+        check_output_paths(outputs, inputs)
         if args.command == "validate":
             result = validate(layout,rules,profile)
             result.update(context)

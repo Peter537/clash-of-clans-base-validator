@@ -6,9 +6,23 @@ At TH18, three Ricochet Cannons consume six Cannons; the Multi Gear Tower consum
 
 Recipes store minimum ingredient levels and the Multi Gear Tower’s gear-up requirement for construction guidance. Inventory checks verify that enough ingredients are available for the declared merges. They cannot reconstruct an account’s previous upgrades or confirm that a merge actually happened in-game. Actual merged-object counts must come from the account.
 
+## Mandatory earlier mergers
+
+The selected rules record `minimum_mergers` per Town Hall. These are minimum completed mergers implied by reaching that Town Hall, including on accounts with `fully_developed: false`:
+
+| Current TH | Ricochet Cannons | Multi-Archer Towers | Multi-Gear Towers |
+| --- | --- | --- | --- |
+| TH16 | 0 | 0 | Unavailable |
+| TH17 | 2 | 2 | 0 |
+| TH18 | 3 | 3 | 1 |
+
+TH16 may still be developing its mergers. TH17's third Ricochet Cannon, third Multi-Archer Tower and Multi-Gear Tower may remain unbuilt while the account stays at TH17. Super Wizard Towers are new at TH18 and have no inherited minimum there. Accounts below TH16 have no merged defenses available.
+
+Missing required mergers produce `MERGER_MIN`; they are not added to declared inventory. Max-template overrides restore only undeclared ingredient defaults after legal merger choices. See [sources](sources.md#merger-progression-evidence) for the derivation and its limits. This validates the current account's modeled inventory, not general readiness to upgrade to the next Town Hall. Historical snapshots retain their original minimums, including none where the older model did not record them.
+
 ## Heroes and optional objects
 
-Hero Hall replaces old altars. It unlocks at TH4 in this snapshot. Banners are 2×2; available slots depend on the actual Hall level: 1 slot at level 1, 2 at level 2, 3 at level 5, 4 at level 7. More owned heroes do not mean more placeable banners. Assigned heroes must be unlocked and cannot be assigned twice. Guardian selection belongs to the TH18 Town Hall; Guardians are not extra buildings or banners.
+Hero Hall replaces old altars. It unlocks at TH4 in this snapshot. Banners are 2×2; available slots depend on the actual Hall level: 1 slot at level 1, 2 at level 3, 3 at level 5, 4 at level 7. Hero Hall 2 unlocks Archer Queen but still permits only one banner. More owned heroes do not mean more placeable banners. Assigned heroes must be unlocked and cannot be assigned twice. Guardian selection belongs to the TH18 Town Hall; Guardians are not extra buildings or banners.
 
 The explicit `--preset max` template assumes five purchased Builder’s Huts. Actual profiles may have fewer, with at least one hut required by the reviewed starting-home model. B.O.B.’s Hut is optional and requires explicit Builder Base unlock confirmation; no template assumes that unlock. Helper Hut is separate from its resident helpers; those residents are not placeable inventory objects. Likewise, pets, troops, equipment, Trader, Forge, boats and scenery are not additional editable Home Village building footprints.
 

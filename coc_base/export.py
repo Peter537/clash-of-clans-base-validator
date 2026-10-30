@@ -8,21 +8,28 @@ from .io import integer, write_json
 from .validate import validate
 
 
+def export_paths(directory):
+    return tuple(Path(directory) / name for name in
+                 ("layout.json", "ruleset.json", "profile.json", "validation.json",
+                  "coordinates.csv", "construction.md"))
+
+
 def export(layout, rules, profile, directory, *, context=None):
     directory = Path(directory)
+    layout_path, rules_path, profile_path, validation_path, coordinates_path, guide_path = export_paths(directory)
     result = validate(layout, rules, profile)
     result.update(context or {})
     directory.mkdir(parents=True, exist_ok=True)
     portable = dict(layout, ruleset="ruleset.json", profile="profile.json")
-    write_json(directory/"layout.json", portable)
-    write_json(directory/"ruleset.json", rules)
-    write_json(directory/"profile.json", profile)
+    write_json(layout_path, portable)
+    write_json(rules_path, rules)
+    write_json(profile_path, profile)
     portable_result = validate(portable, rules, profile)
     portable_result.update(context or {})
-    write_json(directory/"validation.json", portable_result)
+    write_json(validation_path, portable_result)
     fields = ["id", "type", "level", "x", "y", "width", "height", "group", "settings"]
     objects = sorted(layout.get("objects", []), key=lambda o: (o.get("group", ""), o.get("type", ""), str(o.get("id", ""))))
-    with (directory/"coordinates.csv").open("w", encoding="utf-8", newline="") as stream:
+    with coordinates_path.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fields)
         writer.writeheader()
         for obj in objects:
@@ -62,5 +69,5 @@ def export(layout, rules, profile, directory, *, context=None):
     if 'migration' in result:
         lines += ["## Migration comparison", "", "```json", json.dumps(result['migration'], indent=2), "```", ""]
     lines += ["## Inspection", "", "Open the HTML report alongside this guide. The CSV contains every object, including individual walls. This portable folder includes frozen rules and the account profile. Use `py -3.14 -m coc_base validate PATH/TO/layout.json --historical` to reproduce the frozen check. Omit `--historical` to check current bundled rules instead.", "", "This project is unofficial and is not endorsed by Supercell. See [Supercell’s Fan Content Policy](https://supercell.com/en/fan-content-policy/).", ""]
-    (directory/"construction.md").write_text("\n".join(lines), encoding="utf-8")
+    guide_path.write_text("\n".join(lines), encoding="utf-8")
     return result

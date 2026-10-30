@@ -1,12 +1,14 @@
 # Sources, conflicts and limits
 
-The research was reviewed on **2026-10-04**. The rules JSON records exact URLs, SHA256 values and verification dates. Downloaded tables and external pages provide evidence; the rules JSON defines the project model. The maintained local snapshot is selected by `rulesets/current.json`; it does not automatically track live-game changes.
+The base research was reviewed on **2026-10-04**. The **2026-10-30** snapshot adds merger progression and a full fact review using the same pinned game assets and accessible live support pages. The rules JSON records exact URLs, SHA256 values and verification dates. Downloaded tables and external pages provide evidence; the rules JSON defines the project model. The maintained local snapshot is selected by `rulesets/current.json`; it does not automatically track live-game changes.
+
+The **home-2026-10-30** review checks every fact category and corrects banner thresholds, TH8 banner count and Firespitter direction choices, and adds Multi-Gear Tower modes. Corrections were applied in place before publication. See the [full game-fact review](rules-verification.md) for coverage. The pinned manifest is **18.600.3**; the current Apple listing is **18.647.5**. Current live asset currency remains unconfirmed because its fingerprint was not obtained. The older `home-2026-10-04.json` snapshot remains unchanged.
 
 ## Permanent game data
 
 Selected Home Village facts come from Supercell’s public game asset snapshot `edaa611bbb095ac871fc3a692ae1a3251b5f2843`: [buildings.csv](https://game-assets.clashofclans.com/edaa611bbb095ac871fc3a692ae1a3251b5f2843/logic/buildings.csv), [townhall_levels.csv](https://game-assets.clashofclans.com/edaa611bbb095ac871fc3a692ae1a3251b5f2843/logic/townhall_levels.csv), [traps.csv](https://game-assets.clashofclans.com/edaa611bbb095ac871fc3a692ae1a3251b5f2843/logic/traps.csv), [hero_flags.csv](https://game-assets.clashofclans.com/edaa611bbb095ac871fc3a692ae1a3251b5f2843/logic/hero_flags.csv). The build was identified as 18.600.3; its hash identifies the exact snapshot. The version label alone does not establish which build or seasonal phase is current on live servers.
 
-The files have a `Sig:` prefix with a 68-byte header, followed by LZMA with a four-byte size field. For decoding with Python’s standard library, expand that size field to the LZMA-alone eight-byte size field. CSV row 1 contains headers; row 2 contains type names. Blank continuation fields inherit the preceding value within an entity; Town Hall count blanks inherit the previous Town Hall. Retired altars, Builder Base objects, NPC-only content and unused placeholders are excluded. `tools/inspect_assets.py` inspects these reviewed fields from locally downloaded files; it neither installs code nor imports new rules automatically.
+The files have a `Sig:` prefix with a 68-byte header, followed by LZMA with a four-byte size field. For decoding with Python’s standard library, expand that size field to the LZMA-alone eight-byte size field. CSV row 1 contains headers; row 2 contains type names. Blank continuation fields inherit the preceding value within an entity; Town Hall count blanks inherit the previous Town Hall. Global arrays retain every continuation row as a separate array element. Retired altars, Builder Base objects, NPC-only content and unused placeholders are excluded. `tools/inspect_assets.py` inspects these reviewed fields from locally downloaded files; it neither installs code nor imports new rules automatically.
 
 Official articles corroborate interpretation:
 
@@ -16,6 +18,14 @@ Official articles corroborate interpretation:
 - [April 2026 update](https://supercell.com/en/games/clashofclans/blog/release-notes/the-sound-of-clash-update/): new ordinary levels, additional Air Bomb, wall upgrades.
 - [June 2026 update](https://supercell.com/en/games/clashofclans/blog/release-notes/the-anime-fury-update-is-here/): remaining wall upgrades and further building levels.
 - [August 2026 update](https://supercell.com/en/games/clashofclans/blog/release-notes/august-update-3/): later supercharges and seasonal bug fixes.
+
+## Merger progression evidence
+
+The pinned [globals.csv](https://game-assets.clashofclans.com/edaa611bbb095ac871fc3a692ae1a3251b5f2843/logic/globals.csv), SHA256 `9bcaa4989bfdcc8103a79ee8df1bcd730661876e1c166415365c89db61d9a645`, sets `REQUIRE_ALL_BUILDINGS_PLACED_FOR_TOWN_HALL_UPGRADE` to `TRUE`. [Supercell's merger announcement](https://supercell.com/en/games/clashofclans/blog/game-updates/building-merging-th16/) confirms that merging is permanent. Together with the pinned Town Hall count limits, these imply inherited merger minimums: TH17 requires the two Ricochet Cannons and two Multi-Archer Towers available at TH16; TH18 requires the three of each and one Multi-Gear Tower available at TH17.
+
+This is an interpretation of the pinned primary data, not independent observation of live upgrade acceptance. The building and Town Hall files were downloaded again and matched their recorded hashes during this review. The Town Hall 17 building row also records `MergeRequirement: Eagle Artillery:7:0`; separate Eagle inventory is already unavailable at TH17–18. Consumed ingredient levels describe the earlier merger and must not be demanded as additional surviving objects.
+
+The snapshot combines this merger progression with the fact corrections described above and preserves the original `home-2026-10-04.json` snapshot. It does not add a general upgrade-readiness checker, weapon upgrade tracking, or claims about every historical account migration.
 
 ## Resolved discrepancies
 

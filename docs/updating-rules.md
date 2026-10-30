@@ -1,6 +1,6 @@
 # Maintain current rules and preserve frozen designs
 
-Use this procedure for a new Town Hall, building, level, seasonal phase or placement rule. Preserve dated snapshots and their IDs as permanent records of reviewed evidence. Everyday commands load the maintained version through `rulesets/current.json`.
+Use this procedure for a new Town Hall, building, level, seasonal phase or placement rule. Correct an unpublished snapshot in place while reviewing it. Once published or used as a frozen reference, preserve dated snapshots and their IDs as permanent records of reviewed evidence. Everyday commands load the maintained version through `rulesets/current.json`.
 
 1. Read official release notes and support articles. Inspect pinned game assets where counts or footprints lack evidence. Record URLs, verification date, build/hash and raw-file SHA256. Unknown facts that could affect validation remain blocking uncertainties.
 2. Create a new JSON snapshot with a new ID and verification date. Extend Town Hall keys, object levels, count limits, merger recipes, hero prerequisites and seasonal caps as required. Preserve all prior snapshots. Review a future Town Hall's rules before treating it as supported.

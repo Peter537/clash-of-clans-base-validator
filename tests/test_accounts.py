@@ -34,8 +34,9 @@ class AccountTests(unittest.TestCase):
     def test_all_supported_town_halls_actual_and_max(self):
         for th in map(int, RULES["town_halls"]):
             with self.subTest(th=th):
-                actual = create_profile(RULES, th, counts={"builders_hut": 1})
-                self.assertEqual(actual["inventory"], {"town_hall": 1, "builders_hut": 1})
+                counts = {"builders_hut": 1, **RULES["town_halls"][str(th)].get("minimum_mergers", {})}
+                actual = create_profile(RULES, th, counts=counts)
+                self.assertEqual(actual["inventory"], {"town_hall": 1, **counts})
                 self.assertNotIn("level_inventory", actual)
                 self.assertFalse(actual["fully_developed"])
                 maximum = create_profile(RULES, th, preset="max")
@@ -44,11 +45,11 @@ class AccountTests(unittest.TestCase):
                 layout, _ = inventory_fixture(th)
                 layout["objects"] = [o for o in layout["objects"] if o["type"] != "bobs_hut"]
                 self.assertEqual(validate(layout, RULES, maximum)["status"], "PASS")
-                layout["objects"] = [o for o in layout["objects"] if o["type"] == "town_hall"
-                                     or o["type"] == "builders_hut" and o["id"].endswith("001")]
+                layout["objects"] = [o for o in layout["objects"]
+                                     if int(o["id"].rsplit("-", 1)[-1]) <= actual["inventory"].get(o["type"], 0)]
                 report = validate(layout, RULES, actual)
                 self.assertEqual(report["status"], "PASS", report["diagnostics"])
-                self.assertEqual(report["account_levels"]["bounds_only_types"], ["builders_hut", "town_hall"])
+                self.assertEqual(report["account_levels"]["bounds_only_types"], sorted(actual["inventory"]))
 
     def test_counts_and_distribution_precedence(self):
         account = {"inventory": {"builders_hut": 2, "wall": 240},
@@ -68,9 +69,9 @@ class AccountTests(unittest.TestCase):
         account = read_json(ROOT / "examples/th3-hi/inventory.json")
         account["inventory"].pop("wall")
         account["level_inventory"]["wall"] = {"2": 20, "3": 30}
-        profile = create_profile(RULES, 3, account=account)
+        layout, rules, _ = load_bundle(ROOT / "examples/th3-hi/layout.json", historical=True)
+        profile = create_profile(rules, 3, account=account)
         self.assertEqual(profile["inventory"]["wall"], 50)
-        layout, rules, _ = load_bundle(ROOT / "examples/th3-hi/layout.json")
         for wall in [o for o in layout["objects"] if o["type"] == "wall"][:20]:
             wall["level"] = 2
         result = validate(layout, rules, profile)
@@ -117,15 +118,16 @@ class AccountTests(unittest.TestCase):
                      {"hero_hall_level": 2}):
             with self.subTest(case=case), self.assertRaises(ValueError):
                 create_profile(RULES, 4, account=case, counts={"builders_hut": 2})
-        maximum = create_profile(RULES, 12, preset="max", hero_hall_level=2, counts={"hero_banner": 2})
-        self.assertEqual(maximum["level_inventory"]["hero_hall"], {"2": 1})
+        maximum = create_profile(RULES, 12, preset="max", hero_hall_level=3, counts={"hero_banner": 2})
+        self.assertEqual(maximum["level_inventory"]["hero_hall"], {"3": 1})
         self.assertFalse(maximum["fully_developed"])
         overridden = create_profile(RULES, 12, account=account, hero_hall_level=2)
         self.assertEqual(overridden["hero_hall_level"], 2)
 
     def test_optional_purchases_bob_mergers_and_partial_max(self):
         for n in (1, 2, 5):
-            self.assertEqual(create_profile(RULES, 18, counts={"builders_hut": n})["inventory"]["builders_hut"], n)
+            counts = {"builders_hut": n, **RULES["town_halls"]["18"].get("minimum_mergers", {})}
+            self.assertEqual(create_profile(RULES, 18, counts=counts)["inventory"]["builders_hut"], n)
         with self.assertRaises(ValueError):
             create_profile(RULES, 18, counts={"builders_hut": 6})
         with self.assertRaises(ValueError):
@@ -137,10 +139,12 @@ class AccountTests(unittest.TestCase):
         self.assertEqual(profile["inventory"]["bobs_hut"], 1)
         self.assertEqual(profile["level_inventory"]["wall"], {"19": 240})
         self.assertFalse(profile["fully_developed"])
-        partial = create_profile(RULES, 18, counts={"builders_hut": 2, "ricochet_cannon": 2, "cannon": 3})
+        partial = create_profile(RULES, 17, counts={"builders_hut": 2, "multi_archer_tower": 2,
+                                                  "ricochet_cannon": 2, "cannon": 3})
         self.assertEqual(partial["inventory"]["cannon"], 3)
         with self.assertRaisesRegex(ValueError, "MERGER"):
-            create_profile(RULES, 18, counts={"builders_hut": 2, "ricochet_cannon": 3, "cannon": 2})
+            create_profile(RULES, 18, counts={"builders_hut": 2, "multi_archer_tower": 3,
+                                             "ricochet_cannon": 3, "multi_gear_tower": 1, "cannon": 2})
 
     def test_seasonal_state_and_unreviewed_input(self):
         counts = {"builders_hut": 2, "crafting_station": 1}
@@ -172,6 +176,96 @@ class AccountTests(unittest.TestCase):
             self.assertFalse(output.exists())
 
 
+class MergerTests(unittest.TestCase):
+    def setUp(self):
+        self.rules = read_json(ROOT / "rulesets/home-2026-10-30.json")
+
+    def test_inherited_mergers_required_even_for_partial_accounts(self):
+        cases = {16: {}, 17: {"multi_archer_tower": 2, "ricochet_cannon": 2},
+                 18: {"multi_archer_tower": 3, "ricochet_cannon": 3, "multi_gear_tower": 1}}
+        for th, minimums in cases.items():
+            with self.subTest(th=th):
+                counts = {"builders_hut": 1, **minimums}
+                profile = create_profile(self.rules, th, counts=counts)
+                self.assertFalse(profile["fully_developed"])
+                self.assertEqual(profile_diagnostics(profile, self.rules), [])
+                for kind, count in minimums.items():
+                    with self.subTest(kind=kind), self.assertRaisesRegex(ValueError, "MERGER_MIN"):
+                        create_profile(self.rules, th, counts=dict(counts, **{kind: count - 1}))
+                    incomplete = copy.deepcopy(profile)
+                    del incomplete["inventory"][kind]
+                    self.assertIn("MERGER_MIN", {d["code"] for d in profile_diagnostics(incomplete, self.rules)})
+        for th in (17, 18):
+            with self.subTest(th=th), self.assertRaisesRegex(ValueError, "MERGER_MIN"):
+                create_profile(self.rules, th, preset="max", counts={"ricochet_cannon": 0})
+
+    def test_max_overrides_recalculate_unclaimed_ingredients(self):
+        overrides = [
+            {"counts": {"ricochet_cannon": 1}},
+            {"account": {"inventory": {"ricochet_cannon": 1}}},
+            {"level_counts": {"ricochet_cannon:1": 1}},
+            {"account": {"level_inventory": {"ricochet_cannon": {"1": 1}}}}]
+        for kwargs in overrides:
+            with self.subTest(kwargs=kwargs):
+                profile = create_profile(self.rules, 16, preset="max", **kwargs)
+                self.assertEqual(profile["inventory"]["ricochet_cannon"], 1)
+                self.assertEqual(profile["inventory"]["cannon"], 5)
+                self.assertEqual(profile["level_inventory"]["cannon"], {"21": 5})
+        profile = create_profile(self.rules, 17, preset="max", counts={"multi_gear_tower": 0})
+        self.assertEqual(profile["inventory"]["cannon"], 1)
+        self.assertEqual(profile["inventory"]["archer_tower"], 3)
+        profile = create_profile(self.rules, 18, preset="max", counts={"super_wizard_tower": 1})
+        self.assertEqual(profile["inventory"]["wizard_tower"], 4)
+
+    def test_declared_ingredients_and_distributions_still_take_precedence(self):
+        for kwargs in ({"counts": {"ricochet_cannon": 1, "cannon": 2}},
+                       {"counts": {"ricochet_cannon": 1}, "level_counts": {"cannon:21": 2}},
+                       {"account": {"inventory": {"ricochet_cannon": 1, "cannon": 2},
+                                    "level_inventory": {"cannon": {"21": 2}}}}):
+            with self.subTest(kwargs=kwargs):
+                profile = create_profile(self.rules, 16, preset="max", **kwargs)
+                self.assertEqual(profile["inventory"]["cannon"], 2)
+                self.assertEqual(profile["level_inventory"]["cannon"], {"21": 2})
+        with self.assertRaisesRegex(ValueError, "sum"):
+            create_profile(self.rules, 16, preset="max", counts={"ricochet_cannon": 1, "cannon": 3},
+                           level_counts={"cannon:21": 2})
+
+    def test_historical_snapshot_keeps_its_previous_merger_model(self):
+        old = read_json(ROOT / "rulesets/home-2026-10-04.json")
+        layout, profile = inventory_fixture(18)
+        profile["fully_developed"] = False
+        profile["inventory"]["ricochet_cannon"] = 0
+        layout["objects"] = [o for o in layout["objects"] if o["type"] != "ricochet_cannon"]
+        for obj in layout["objects"]:
+            if obj["type"] == "multi_gear_tower":
+                obj.pop("settings", None)
+        layout["ruleset_id"] = profile["ruleset_id"] = old["id"]
+        self.assertEqual(validate(layout, old, profile)["status"], "PASS")
+        current = validate(layout, self.rules, profile)
+        self.assertEqual(current["status"], "INVALID")
+        self.assertIn("MERGER_MIN", {d["code"] for d in current["diagnostics"]})
+
+    def test_merger_minimum_changes_identify_affected_placements(self):
+        with temporary_directory() as directory:
+            old = copy.deepcopy(self.rules)
+            old["id"] = "synthetic-before-merger-minimums"
+            for town_hall in old["town_halls"].values():
+                town_hall.pop("minimum_mergers", None)
+            layout, profile = inventory_fixture(18)
+            layout.update(ruleset="old.json", profile="profile.json", ruleset_id=old["id"])
+            profile["ruleset_id"] = old["id"]
+            write_json(directory / "layout.json", layout)
+            write_json(directory / "profile.json", profile)
+            write_json(directory / "old.json", old)
+            context = selection_context(directory / "layout.json", self.rules, explicit=True)["migration"]
+            self.assertEqual(context["minimum_merger_changes"], {
+                "ricochet_cannon": {"before": 0, "after": 3},
+                "multi_archer_tower": {"before": 0, "after": 3},
+                "multi_gear_tower": {"before": 0, "after": 1}})
+            self.assertEqual(len(context["affected_objects"]), 7)
+            self.assertTrue(context["review_required"])
+
+
 class RulesSelectionTests(unittest.TestCase):
     def test_default_current_historical_explicit_and_frozen_portability(self):
         with temporary_directory() as directory:
@@ -186,6 +280,7 @@ class RulesSelectionTests(unittest.TestCase):
             write_json(checkout / "rulesets/new.json", newer)
             write_json(checkout / "rulesets/current.json", {"schema_version": 1, "ruleset": "new.json"})
             example = "examples/th3-hi/layout.json"
+            frozen_rules = read_json(checkout / "rulesets/home-2026-10-04.json")
             original_layout = (checkout / example).read_bytes()
             original_profile = (checkout / "examples/th3-hi/profile.json").read_bytes()
             for mode, flags, expected in (("current", [], 2), ("historical", ["--historical"], 0),
@@ -216,7 +311,7 @@ class RulesSelectionTests(unittest.TestCase):
             bundle.rename(moved)
             self.assertEqual(cli(checkout, "validate", moved / "layout.json", "--historical").returncode, 0)
             self.assertEqual(cli(checkout, "validate", moved / "layout.json").returncode, 2)
-            self.assertEqual(read_json(moved / "ruleset.json"), RULES)
+            self.assertEqual(read_json(moved / "ruleset.json"), frozen_rules)
             self.assertEqual(read_json(moved / "layout.json")["objects"], read_json(ROOT / example)["objects"])
             profile_path = directory / "max.json"
             self.assertEqual(cli(checkout, "profile", "create", "--town-hall", 3, "--preset", "max", "--output", profile_path).returncode, 0)
