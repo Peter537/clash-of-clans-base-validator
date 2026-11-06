@@ -55,3 +55,19 @@ Optional `level_inventory` records how many objects of each type are at each ord
 Profiles may describe obstacles with measured rectangles: `{"x":8,"y":9,"width":2,"height":2,"label":"saved tree"}`. A layout may add `reserved_areas` in the same format. `allow_types: ["wall"]` allows walls in a lettering reservation while excluding buildings and traps. If present, `allow_types` must be an array of strings; omitted or empty permissions allow no object types. Each area must fit within the board.
 
 Invalid placements remain visible in reports. Objects whose footprints are unresolved use a visibly uncertain 1×1 marker; that marker does not establish their size.
+
+## Validation reports
+
+Report schema version 1 retains `account_levels.distribution_checked_types`, `bounds_only_types` and `statement`. Checked types are those whose declared level distribution was actually compared with usable placed-level data, whether it matched or differed. Bounds-only types have no distribution and a complete set of placements whose ordinary levels were checked. An early return does not establish either kind of coverage.
+
+`account_levels.per_type` records the evidence for each inventory or distribution type:
+
+| State | Meaning |
+| --- | --- |
+| `not_declared` | No level distribution was supplied for the type |
+| `not_run` | Comparison did not run for a declared distribution |
+| `invalid_input` | The distribution, inventory count or required placed-level data could not be compared |
+| `matched` | A completed comparison matched the declared distribution |
+| `mismatched` | A completed comparison differed from the declared distribution |
+
+`account_levels.stages` records `inventory_available`, `level_inventory_available`, `object_scan_completed` and `distribution_comparison_completed`. Structural checks require usable inventory mappings before producing a report, so the availability fields are true in reports. Stage completion means that the stage ran, not that every input was valid or every comparison matched. Use these fields with diagnostics and the overall status. Model validation only; in-game acceptance remains unconfirmed.

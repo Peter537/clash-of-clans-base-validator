@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import sys
 
-from .io import CURRENT_SELECTOR, check_output_paths, check_rules_structure, current_rules_path, load_bundle, read_json, selection_context, write_json
+from .io import CURRENT_SELECTOR, OutputError, check_output_paths, check_rules_structure, current_rules_path, load_bundle, read_json, selection_context, write_json
 from .profiles import count_assignments, create_profile
 from .validate import validate
 from .render import render, render_paths
@@ -98,7 +98,12 @@ def main(argv=None):
             print(f"{d['severity'].upper()} {d['code']}: {d['message']}")
         if "migration" in result:
             print("Migration: " + json.dumps(result["migration"]))
+        for warning in result.get("output_warnings", []):
+            print(f"Output warning: {warning}", file=sys.stderr)
         return 1 if result["errors"] else 2 if result["unknowns"] else 0
+    except OutputError as exc:
+        print(f"Output error: {exc}", file=sys.stderr)
+        return 3
     except (OSError, ValueError, KeyError, TypeError) as exc:
         print(f"Input error: {exc}", file=sys.stderr)
         return 3

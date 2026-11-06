@@ -2,7 +2,10 @@
 
 import hashlib
 import json
+import os
 from pathlib import Path
+import shutil
+import uuid
 
 
 CURRENT_SELECTOR = Path(__file__).resolve().parents[1] / "rulesets/current.json"
@@ -23,6 +26,85 @@ def write_json(path, value):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+class OutputError(OSError):
+    """Publication failed; recovery_directory identifies retained backups."""
+
+    def __init__(self, message, *, recovery_directory=None):
+        super().__init__(message)
+        self.recovery_directory = recovery_directory
+
+def _remove_stage(stage, parent):
+    if stage.resolve().parent != parent.resolve():
+        raise OSError(f"Refusing to clean staging directory outside {parent}")
+    shutil.rmtree(stage)
+
+def _publish_text_files(contents):
+    """Stage a prepared file family and restore replaced files on handled failure.
+
+    Replacements are atomic per file, not across the family. Callers must use a
+    single writer; termination or power loss can interrupt publication.
+    """
+    if not contents:
+        return []
+    files = [(Path(path).absolute(), text) for path, text in contents.items()]
+    parent = files[0][0].parent.resolve()
+    if any(path.parent.resolve() != parent for path, text in files):
+        raise ValueError("Prepared outputs must share one directory")
+    files = [(parent / path.name, text) for path, text in files]
+    if len({path for path, text in files}) != len(files):
+        raise ValueError("Prepared outputs must have distinct paths")
+    for path, text in files:
+        text.encode("utf-8")
+        if path.is_symlink() or path.exists() and not path.is_file():
+            raise OutputError(f"Output target must be an ordinary file: {path}")
+    stage = parent / f".coc-base-stage-{uuid.uuid4().hex}"
+    backups, published = {}, []
+    try:
+        parent.mkdir(parents=True, exist_ok=True)
+        stage.mkdir()
+    except OSError as exc:
+        raise OutputError(f"Could not create output staging directory in {parent}: {exc}") from exc
+    try:
+        for index, (path, text) in enumerate(files):
+            (stage / f"new-{index}").write_text(text, encoding="utf-8", newline="")
+        for index, (path, text) in enumerate(files):
+            if path.exists():
+                backup = stage / f"old-{index}"
+                shutil.copy2(path, backup)
+                backups[path] = backup
+        for index, (path, text) in enumerate(files):
+            os.replace(stage / f"new-{index}", path)
+            published.append(path)
+    except OSError as exc:
+        unrestored = []
+        for path in reversed(published):
+            try:
+                if path in backups:
+                    os.replace(backups[path], path)
+                else:
+                    path.unlink()
+            except OSError as recovery_exc:
+                source = backups.get(path)
+                action = f"restore from {source}" if source else "remove newly created output"
+                unrestored.append(f"{path}: {action}: {recovery_exc}")
+        if unrestored:
+            raise OutputError(
+                f"Output publication failed: {exc}. Recovery required; retained files at {stage}. "
+                + "; ".join(unrestored), recovery_directory=stage) from exc
+        try:
+            _remove_stage(stage, parent)
+        except OSError as cleanup_exc:
+            raise OutputError(
+                f"Output publication failed: {exc}. Previous outputs restored; staging files remain at "
+                f"{stage}: {cleanup_exc}", recovery_directory=stage) from exc
+        raise OutputError(f"Output publication failed: {exc}. Previous outputs restored.") from exc
+    try:
+        _remove_stage(stage, parent)
+    except OSError as exc:
+        return [f"Outputs published, but staging cleanup failed at {stage}: {exc}"]
+    return []
 
 
 def check_output_paths(outputs, inputs):
@@ -238,13 +320,17 @@ def selection_context(path, rules, *, historical=False, explicit=False):
     context = {"rules_mode": "historical" if historical else "explicit" if explicit else "current",
                "current_ruleset_id": None}
     try:
-        current = read_json(current_rules_path())
+        current = read_json(current_rules_path()) if historical or explicit else rules
         check_rules_structure(current)
+        if not current["id"].strip():
+            raise ValueError("Current ruleset metadata requires a nonempty string id")
         context["current_ruleset_id"] = current["id"]
     except (OSError, ValueError, KeyError, TypeError) as exc:
         if not (historical or explicit):
             raise
         context["current_ruleset_notice"] = f"Current rules metadata unavailable; selected rules are unchanged: {exc}"
+        context["current_ruleset_available"] = False
+        context["current_ruleset_unavailable_reason"] = str(exc)
     if historical:
         return context
     path = Path(path).resolve()

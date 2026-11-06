@@ -1,10 +1,11 @@
 """Portable coordinate bundle and a construction order from saved placements."""
 
 import csv
+from io import StringIO
 import json
 from pathlib import Path
 
-from .io import integer, write_json
+from .io import _publish_text_files, integer
 from .validate import validate
 
 
@@ -14,22 +15,20 @@ def export_paths(directory):
                   "coordinates.csv", "construction.md"))
 
 
-def export(layout, rules, profile, directory, *, context=None):
+def _prepare_export(layout, rules, profile, directory, *, context=None):
     directory = Path(directory)
     layout_path, rules_path, profile_path, validation_path, coordinates_path, guide_path = export_paths(directory)
     result = validate(layout, rules, profile)
     result.update(context or {})
-    directory.mkdir(parents=True, exist_ok=True)
     portable = dict(layout, ruleset="ruleset.json", profile="profile.json")
-    write_json(layout_path, portable)
-    write_json(rules_path, rules)
-    write_json(profile_path, profile)
     portable_result = validate(portable, rules, profile)
     portable_result.update(context or {})
-    write_json(validation_path, portable_result)
+    contents = {path: json.dumps(value, ensure_ascii=False, indent=2) + "\n"
+                for path, value in ((layout_path, portable), (rules_path, rules),
+                                    (profile_path, profile), (validation_path, portable_result))}
     fields = ["id", "type", "level", "x", "y", "width", "height", "group", "settings"]
     objects = sorted(layout.get("objects", []), key=lambda o: (o.get("group", ""), o.get("type", ""), str(o.get("id", ""))))
-    with coordinates_path.open("w", encoding="utf-8", newline="") as stream:
+    with StringIO(newline="") as stream:
         writer = csv.DictWriter(stream, fields)
         writer.writeheader()
         for obj in objects:
@@ -38,6 +37,7 @@ def export(layout, rules, profile, directory, *, context=None):
                 row["width"], row["height"] = rules["objects"][obj["type"]]["width"], rules["objects"][obj["type"]]["height"]
             row["settings"] = json.dumps(obj.get("settings", {}), sort_keys=True)
             writer.writerow(row)
+        contents[coordinates_path] = stream.getvalue()
     lines = [f"# {layout.get('name', 'Layout')} · TH{profile['town_hall']} construction", "",
              f"Validation: **{result['status']}**. Model validation only; in-game acceptance unconfirmed.", "",
              f"Rules: {result.get('rules_mode', 'supplied')} · {rules['id']} · reviewed {rules['verified_on']}.", "",
@@ -69,5 +69,13 @@ def export(layout, rules, profile, directory, *, context=None):
     if 'migration' in result:
         lines += ["## Migration comparison", "", "```json", json.dumps(result['migration'], indent=2), "```", ""]
     lines += ["## Inspection", "", "Open the HTML report alongside this guide. The CSV contains every object, including individual walls. This portable folder includes frozen rules and the account profile. Use `py -3.14 -m coc_base validate PATH/TO/layout.json --historical` to reproduce the frozen check. Omit `--historical` to check current bundled rules instead.", "", "This project is unofficial and is not endorsed by Supercell. See [Supercell’s Fan Content Policy](https://supercell.com/en/fan-content-policy/).", ""]
-    guide_path.write_text("\n".join(lines), encoding="utf-8")
+    contents[guide_path] = "\n".join(lines)
+    return result, contents
+
+
+def export(layout, rules, profile, directory, *, context=None):
+    result, contents = _prepare_export(layout, rules, profile, directory, context=context)
+    output_warnings = _publish_text_files(contents)
+    if output_warnings:
+        result["output_warnings"] = output_warnings
     return result

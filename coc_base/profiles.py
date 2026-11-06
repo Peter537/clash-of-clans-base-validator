@@ -19,6 +19,38 @@ def available_limits(rules, profile):
     return limits
 
 
+def level_distribution_diagnostics(kind, distribution, profile, rules):
+    """Check one declared distribution, independently of placement matching."""
+    issues = []
+
+    def issue(code, message, severity="error"):
+        issues.append({"severity": severity, "code": code, "message": message, "objects": []})
+
+    specs = rules["objects"]
+    if kind not in specs:
+        issue("UNKNOWN_TYPE", f"Unknown level inventory type {kind}", "unknown")
+        return issues
+    if not isinstance(distribution, dict) or not distribution:
+        issue("LEVEL_INVENTORY", f"{kind}: level distribution must be a nonempty object")
+        return issues
+    th, hall = profile["town_hall"], profile.get("hero_hall_level", 0)
+    valid_counts = True
+    for level, count in distribution.items():
+        if (not isinstance(level, str) or not level.isdecimal() or str(int(level)) != level
+                or not integer(count) or count < 0):
+            issue("LEVEL_INVENTORY", f"{kind}: use canonical integer level keys and nonnegative integer counts")
+            valid_counts = False
+            continue
+        n = int(level)
+        if not 1 <= n <= specs[kind]["max_levels"][str(th)]:
+            issue("LEVEL_INVENTORY", f"{kind}: level {n} is unavailable at TH{th}")
+        if count and ((kind == "town_hall" and n != th) or (kind == "hero_hall" and n != hall)):
+            issue("LEVEL_INVENTORY", f"{kind}: distribution differs from account level")
+    if valid_counts and sum(distribution.values()) != profile["inventory"].get(kind, 0):
+        issue("LEVEL_INVENTORY", f"{kind}: level counts must sum to inventory count")
+    return issues
+
+
 def profile_diagnostics(profile, rules):
     check_profile_structure(profile)
     check_rules_structure(rules)
@@ -82,26 +114,7 @@ def profile_diagnostics(profile, rules):
         issue("LEVEL_INVENTORY", "level_inventory must be an object")
         levels = {}
     for kind, distribution in levels.items():
-        if kind not in specs:
-            issue("UNKNOWN_TYPE", f"Unknown level inventory type {kind}", "unknown")
-            continue
-        if not isinstance(distribution, dict) or not distribution:
-            issue("LEVEL_INVENTORY", f"{kind}: level distribution must be a nonempty object")
-            continue
-        valid = True
-        for level, count in distribution.items():
-            if (not isinstance(level, str) or not level.isdecimal() or str(int(level)) != level
-                    or not integer(count) or count < 0):
-                issue("LEVEL_INVENTORY", f"{kind}: use canonical integer level keys and nonnegative integer counts")
-                valid = False
-                continue
-            n = int(level)
-            if not 1 <= n <= specs[kind]["max_levels"][str(th)]:
-                issue("LEVEL_INVENTORY", f"{kind}: level {n} is unavailable at TH{th}")
-            if count and ((kind == "town_hall" and n != th) or (kind == "hero_hall" and n != hall)):
-                issue("LEVEL_INVENTORY", f"{kind}: distribution differs from account level")
-        if valid and sum(distribution.values()) != inventory.get(kind, 0):
-            issue("LEVEL_INVENTORY", f"{kind}: level counts must sum to inventory count")
+        issues.extend(level_distribution_diagnostics(kind, distribution, profile, rules))
     areas = profile.get("blocked_areas", [])
     if not isinstance(areas, list):
         issue("AREA_SCHEMA", "blocked_areas must be an array")

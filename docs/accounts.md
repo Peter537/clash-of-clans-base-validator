@@ -35,6 +35,8 @@ A level distribution lists how many objects you own at each ordinary upgrade lev
 
 Validation compares supplied distributions with placed objects. For types without distributions, it checks the level limits for the Town Hall and the required settings. Reports list types whose actual account levels were not checked. Mixed wall levels are supported; supply a distribution to check the exact mix on your account.
 
+Reports distinguish completed comparisons from invalid or skipped comparisons, including an early return for an unsupported Town Hall. See [validation report evidence](layout-format.md#validation-reports). Malformed input structures remain input errors and produce no validation report.
+
 ## Override order
 
 JSON input is applied first, then CLI flags. `--count TYPE=N` replaces that count. A set of `--level-count TYPE:LEVEL=N` flags replaces the entire supplied distribution for that type. Other types' distributions remain unchanged. Repeating a count key or type/level pair fails. A count override keeps any explicitly supplied distribution, so inconsistent totals fail.

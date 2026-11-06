@@ -4,7 +4,7 @@ from html import escape
 import json
 from pathlib import Path
 
-from .io import footprint, write_json
+from .io import _publish_text_files, footprint
 from .validate import integer, validate
 
 
@@ -89,7 +89,7 @@ def svg(layout, rules, profile, result, iso=False):
             + ''.join(content) + '</svg>')
 
 
-def render(layout, rules, profile, output, *, context=None):
+def _prepare_render(layout, rules, profile, output, *, context=None):
     output, validation_path, isometric_path, overhead_path = render_paths(output)
     result = validate(layout, rules, profile)
     result.update(context or {})
@@ -113,9 +113,14 @@ def render(layout, rules, profile, output, *, context=None):
 <section class="panel" id="overhead"><h2>Overhead · construction grid</h2>{overhead}<p class="caption">Origins are the upper-left corners of footprints. Tile coordinates run 0–{rules['board']['width']-1} on x and 0–{rules['board']['height']-1} on y. Reserved areas have dashed outlines. Red strokes identify reported object errors.</p></section>
 <section class="columns" id="checks"><div class="panel"><h2>Validation</h2><p>{result["errors"]} errors · {result["unknowns"]} unresolved rules</p><ul>{errors}</ul><p>Visual review: {escape(str(layout.get("visual_review",{}).get("conclusion","pending")))}</p><details><summary>Snapshot identity</summary><p>{escape(rules["id"])}</p><code>Layout SHA256: {result["layout_sha256"]}<br>Rules SHA256: {result["ruleset_sha256"]}<br>Profile SHA256: {result["profile_sha256"]}</code></details></div>
 <div class="panel"><h2>Complete inventory</h2><table><tr><th>Object</th><th>Placed</th><th>Required</th></tr>{rows}</table></div></section><p class="caption">This project is unofficial and is not endorsed by Supercell. See <a href="https://supercell.com/en/fan-content-policy/">Supercell’s Fan Content Policy</a>.</p></main></html>'''
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(html, encoding="utf-8")
-    write_json(validation_path, result)
-    isometric_path.write_text(iso, encoding="utf-8")
-    overhead_path.write_text(overhead, encoding="utf-8")
+    return result, {output: html,
+                    validation_path: json.dumps(result, ensure_ascii=False, indent=2) + "\n",
+                    isometric_path: iso, overhead_path: overhead}
+
+
+def render(layout, rules, profile, output, *, context=None):
+    result, contents = _prepare_render(layout, rules, profile, output, context=context)
+    output_warnings = _publish_text_files(contents)
+    if output_warnings:
+        result["output_warnings"] = output_warnings
     return result

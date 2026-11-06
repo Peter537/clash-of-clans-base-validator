@@ -5,7 +5,7 @@ import re
 from urllib.parse import urlsplit, parse_qs
 
 from .io import check_layout_structure, check_profile_structure, check_rules_structure, digest, footprint, integer
-from .profiles import available_limits, profile_diagnostics
+from .profiles import available_limits, level_distribution_diagnostics, profile_diagnostics
 
 
 def allowed(value, options):
@@ -34,6 +34,9 @@ def validate(layout, rules, profile):
     check_rules_structure(rules)
     check_profile_structure(profile)
     diagnostics = []
+    level_evidence = {"object_scan_completed": False, "distribution_comparison_completed": False,
+                      "per_type": {kind: "invalid_input" for kind, count in profile["inventory"].items()
+                                   if count < 0}, "bounds_only_types": []}
 
     def issue(code, message, objects=(), severity="error"):
         diagnostics.append({"severity": severity, "code": code, "message": message,
@@ -42,7 +45,7 @@ def validate(layout, rules, profile):
     th = profile.get("town_hall")
     if not integer(th) or str(th) not in rules.get("town_halls", {}):
         issue("TOWN_HALL", "Profile Town Hall is unsupported")
-        return report(layout, rules, profile, diagnostics)
+        return report(layout, rules, profile, diagnostics, level_evidence=level_evidence)
     if layout.get("town_hall") != th:
         issue("PROFILE_TH", "Layout and profile Town Halls differ")
     if not isinstance(layout.get("name"), str) or not layout["name"].strip():
@@ -64,6 +67,7 @@ def validate(layout, rules, profile):
 
     objects = layout.get("objects")
     seen, occupied, counts = set(), {}, Counter()
+    level_validity = {}
     board = rules["board"]
     width, height = board["width"], board["height"]
     blockers = []
@@ -95,6 +99,10 @@ def validate(layout, rules, profile):
             issue("UNKNOWN_RULE", f"{kind} rules are unreviewed", [oid], "unknown")
         max_level = spec["max_levels"].get(str(th), 0)
         level = obj.get("level")
+        valid_level = (integer(level) and 1 <= level <= max_level
+                       and (kind != "town_hall" or level == th)
+                       and (kind != "hero_hall" or level == hall_level))
+        level_validity[kind] = level_validity.get(kind, True) and valid_level
         if not max_level or not limits.get(kind, 0):
             issue("AVAILABILITY", f"{oid}: {kind} unavailable at TH{th}", [oid])
         if not integer(level) or not 1 <= level <= max_level:
@@ -153,6 +161,7 @@ def validate(layout, rules, profile):
                     occupied[tx, ty] = oid
         if collisions:
             issue("OVERLAP", f"{oid}: overlaps {', '.join(sorted(collisions))}", [oid, *sorted(collisions)])
+    level_evidence["object_scan_completed"] = True
     for kind in counts.keys() | inventory.keys():
         if counts[kind] != inventory.get(kind, 0):
             issue("INVENTORY", f"{kind}: placed {counts[kind]}, account requires {inventory.get(kind, 0)}")
@@ -167,6 +176,17 @@ def validate(layout, rules, profile):
             if dict(placed) != expected:
                 issue("ACCOUNT_LEVEL", f"{kind}: placed level counts differ from the account distribution",
                       [o["id"] for o in matching if isinstance(o.get("id"), str)])
+            account_count = inventory.get(kind, 0)
+            if (level_distribution_diagnostics(kind, distribution, profile, rules)
+                    or account_count < 0 or (matching and not level_validity.get(kind, False))):
+                level_evidence["per_type"][kind] = "invalid_input"
+            else:
+                level_evidence["per_type"][kind] = "matched" if dict(placed) == expected else "mismatched"
+        level_evidence["bounds_only_types"] = sorted(
+            kind for kind, count in inventory.items()
+            if count > 0 and kind not in distributions
+            and counts[kind] == count and level_validity.get(kind, False))
+    level_evidence["distribution_comparison_completed"] = True
     assigned = [o.get("settings", {}).get("hero") for o in objects if isinstance(o,dict) and o.get("type") == "hero_banner" and isinstance(o.get("settings",{}),dict)]
     for hero,n in Counter(h for h in assigned if isinstance(h,str) and h != "unassigned").items():
         if n > 1:
@@ -185,25 +205,48 @@ def validate(layout, rules, profile):
             issue("COPY_LINK", str(exc))
     if layout.get("village") not in ("HV", "WB"):
         issue("VILLAGE", "village must be HV (home) or WB (war snapshot)")
-    return report(layout, rules, profile, diagnostics, counts, len(occupied))
+    return report(layout, rules, profile, diagnostics, counts, len(occupied), level_evidence=level_evidence)
 
 
-def report(layout, rules, profile, diagnostics, counts=None, occupied=0):
+def report(layout, rules, profile, diagnostics, counts=None, occupied=0, *, level_evidence=None):
     errors = sum(d["severity"] == "error" for d in diagnostics)
     unknowns = sum(d["severity"] == "unknown" for d in diagnostics)
     inventory = profile.get("inventory", {})
     levels = profile.get("level_inventory", {})
-    declared = sorted(k for k, n in inventory.items() if integer(n) and n > 0) if isinstance(inventory, dict) else []
-    checked = sorted(k for k in declared if isinstance(levels, dict) and k in levels)
-    unchecked = sorted(set(declared) - set(checked))
+    evidence = level_evidence or {"object_scan_completed": False, "distribution_comparison_completed": False,
+                                  "per_type": {}, "bounds_only_types": []}
+    declared = {k for k, n in inventory.items() if n > 0}
+    per_type = {}
+    for kind in sorted(inventory.keys() | levels.keys()):
+        if kind in evidence["per_type"]:
+            per_type[kind] = evidence["per_type"][kind]
+        elif kind not in levels:
+            per_type[kind] = "not_declared"
+        else:
+            per_type[kind] = "not_run"
+    checked = sorted(k for k, state in per_type.items() if state in ("matched", "mismatched"))
+    unchecked = sorted({k for k in declared if per_type.get(k) != "matched"}
+                       | {k for k, state in per_type.items() if state in ("invalid_input", "mismatched")})
+    if not evidence["distribution_comparison_completed"]:
+        statement = "Account level comparison did not run."
+    elif unchecked:
+        statement = "Actual account levels were not checked or did not match for: " + ", ".join(unchecked)
+    elif not declared:
+        statement = "No positive inventory types were declared for account level comparison."
+    else:
+        statement = "Declared level distributions matched for all positive inventory types."
     return {"schema_version": 1, "status": "INVALID" if errors else "UNRESOLVED" if unknowns else "PASS",
             "verification": "model validation only; in-game acceptance unconfirmed",
             "visual_review": "LLM/manual review required; Python does not recognize lettering",
             "ruleset_id": rules.get("id"), "ruleset_verified_on": rules.get("verified_on"),
             "profile_id": profile.get("id"),
-            "account_levels": {"distribution_checked_types": checked, "bounds_only_types": unchecked,
-                               "statement": "Actual account levels were not checked for: " + ", ".join(unchecked)
-                               if unchecked else "Declared level distributions checked for all inventory types."},
+            "account_levels": {"distribution_checked_types": checked,
+                               "bounds_only_types": evidence["bounds_only_types"],
+                               "per_type": per_type,
+                               "stages": {"object_scan_completed": evidence["object_scan_completed"],
+                                          "distribution_comparison_completed": evidence["distribution_comparison_completed"],
+                                          "inventory_available": True, "level_inventory_available": True},
+                               "statement": statement},
             "layout_sha256": digest(layout), "ruleset_sha256": digest(rules),
             "profile_sha256": digest(profile), "errors": errors, "unknowns": unknowns,
             "placed_counts": dict(sorted((counts or {}).items())), "occupied_tiles": occupied,
